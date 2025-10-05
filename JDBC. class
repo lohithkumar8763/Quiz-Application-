@@ -1,0 +1,178 @@
+package database;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.Statement;
+import java.util.ArrayList;
+
+public class JDBC {
+   private static final String DB_URL = "jdbc:mysql://127.0.0.1:3306/quiz_gui_db";
+   private static final String DB_USERNAME = "root";
+   private static final String DB_PASSWORD = "password";
+
+   public JDBC() {
+   }
+
+   public static boolean saveQuestionCategoryAndAnswersToDatabase(String var0, String var1, String[] var2, int var3) {
+      try {
+         Connection var4 = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/quiz_gui_db", "root", "password");
+         Category var5 = getCategory(var1);
+         if (var5 == null) {
+            var5 = insertCategory(var1);
+         }
+
+         Question var6 = insertQuestion(var5, var0);
+         return insertAnswers(var6, var2, var3);
+      } catch (Exception var7) {
+         var7.printStackTrace();
+         return false;
+      }
+   }
+
+   public static ArrayList<Question> getQuestions(Category var0) {
+      ArrayList var1 = new ArrayList();
+
+      try {
+         Connection var2 = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/quiz_gui_db", "root", "password");
+         PreparedStatement var3 = var2.prepareStatement("SELECT * FROM QUESTION JOIN CATEGORY ON QUESTION.CATEGORY_ID = CATEGORY.CATEGORY_ID WHERE CATEGORY.CATEGORY_NAME = ? ORDER BY RAND()");
+         var3.setString(1, var0.getCategoryName());
+         ResultSet var4 = var3.executeQuery();
+
+         while(var4.next()) {
+            int var5 = var4.getInt("question_id");
+            int var6 = var4.getInt("category_id");
+            String var7 = var4.getString("question_text");
+            var1.add(new Question(var5, var6, var7));
+         }
+
+         return var1;
+      } catch (Exception var8) {
+         var8.printStackTrace();
+         return null;
+      }
+   }
+
+   private static Question insertQuestion(Category var0, String var1) {
+      try {
+         Connection var2 = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/quiz_gui_db", "root", "password");
+         PreparedStatement var3 = var2.prepareStatement("INSERT INTO QUESTION(CATEGORY_ID, QUESTION_TEXT) VALUES(?, ?)", 1);
+         var3.setInt(1, var0.getCategoryId());
+         var3.setString(2, var1);
+         var3.executeUpdate();
+         ResultSet var4 = var3.getGeneratedKeys();
+         if (var4.next()) {
+            int var5 = var4.getInt(1);
+            return new Question(var5, var0.getCategoryId(), var1);
+         }
+      } catch (Exception var6) {
+         var6.printStackTrace();
+      }
+
+      return null;
+   }
+
+   public static Category getCategory(String var0) {
+      try {
+         Connection var1 = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/quiz_gui_db", "root", "password");
+         PreparedStatement var2 = var1.prepareStatement("SELECT * FROM CATEGORY WHERE CATEGORY_NAME = ?");
+         var2.setString(1, var0);
+         ResultSet var3 = var2.executeQuery();
+         if (var3.next()) {
+            int var4 = var3.getInt("category_id");
+            return new Category(var4, var0);
+         }
+      } catch (Exception var5) {
+         var5.printStackTrace();
+      }
+
+      return null;
+   }
+
+   public static ArrayList<String> getCategories() {
+      ArrayList var0 = new ArrayList();
+
+      try {
+         Connection var1 = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/quiz_gui_db", "root", "password");
+         Statement var2 = var1.createStatement();
+         ResultSet var3 = var2.executeQuery("SELECT * FROM CATEGORY");
+
+         while(var3.next()) {
+            String var4 = var3.getString("category_name");
+            var0.add(var4);
+         }
+
+         return var0;
+      } catch (Exception var5) {
+         var5.printStackTrace();
+         return null;
+      }
+   }
+
+   private static Category insertCategory(String var0) {
+      try {
+         Connection var1 = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/quiz_gui_db", "root", "password");
+         PreparedStatement var2 = var1.prepareStatement("INSERT INTO CATEGORY(CATEGORY_NAME) VALUES(?)", 1);
+         var2.setString(1, var0);
+         var2.executeUpdate();
+         ResultSet var3 = var2.getGeneratedKeys();
+         if (var3.next()) {
+            int var4 = var3.getInt(1);
+            return new Category(var4, var0);
+         }
+      } catch (Exception var5) {
+         var5.printStackTrace();
+      }
+
+      return null;
+   }
+
+   public static ArrayList<Answer> getAnswers(Question var0) {
+      ArrayList var1 = new ArrayList();
+
+      try {
+         Connection var2 = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/quiz_gui_db", "root", "password");
+         PreparedStatement var3 = var2.prepareStatement("SELECT * FROM QUESTION JOIN ANSWER ON QUESTION.QUESTION_ID = ANSWER.QUESTION_ID WHERE QUESTION.QUESTION_ID = ? ORDER BY RAND()");
+         var3.setInt(1, var0.getQuestionId());
+         ResultSet var4 = var3.executeQuery();
+
+         while(var4.next()) {
+            int var5 = var4.getInt("idanswer");
+            String var6 = var4.getString("answer_text");
+            boolean var7 = var4.getBoolean("is_correct");
+            Answer var8 = new Answer(var5, var0.getQuestionId(), var6, var7);
+            var1.add(var8);
+         }
+
+         return var1;
+      } catch (Exception var9) {
+         var9.printStackTrace();
+         return null;
+      }
+   }
+
+   private static boolean insertAnswers(Question var0, String[] var1, int var2) {
+      try {
+         Connection var3 = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/quiz_gui_db", "root", "password");
+         PreparedStatement var4 = var3.prepareStatement("INSERT INTO ANSWER(QUESTION_ID, ANSWER_TEXT, IS_CORRECT) VALUES(?, ?, ?)");
+         var4.setInt(1, var0.getQuestionId());
+
+         for(int var5 = 0; var5 < var1.length; ++var5) {
+            var4.setString(2, var1[var5]);
+            if (var5 == var2) {
+               var4.setBoolean(3, true);
+            } else {
+               var4.setBoolean(3, false);
+            }
+
+            var4.executeUpdate();
+         }
+
+         return true;
+      } catch (Exception var6) {
+         var6.printStackTrace();
+         return false;
+      }
+   }
+}

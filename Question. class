@@ -1,0 +1,36 @@
+package database;
+
+import java.util.ArrayList;
+
+public class Question {
+   private int questionId;
+   private int categoryId;
+   private String questionText;
+   private ArrayList<Answer> answers;
+
+   public int getQuestionId() {
+      return this.questionId;
+   }
+
+   public int getCategoryId() {
+      return this.categoryId;
+   }
+
+   public String getQuestionText() {
+      return this.questionText;
+   }
+
+   public ArrayList<Answer> getAnswers() {
+      return this.answers;
+   }
+
+   public void setAnswers(ArrayList<Answer> var1) {
+      this.answers = var1;
+   }
+
+   public Question(int var1, int var2, String var3) {
+      this.questionId = var1;
+      this.categoryId = var2;
+      this.questionText = var3;
+   }
+}
